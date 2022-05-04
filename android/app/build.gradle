@@ -65,8 +65,16 @@ android {
         }
     }
     buildTypes {
+        // to get this build type:
+        // run flutter build <apk | appbundle>
         release {
             signingConfig signingConfigs.release
+        }
+
+        // to get this build type:
+        // run flutter build <apk | appbundle> --debug
+        debug {
+            signingConfig signingConfigs.debug
         }
     }
 }
