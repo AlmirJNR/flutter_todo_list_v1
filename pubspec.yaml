@@ -49,6 +49,9 @@ dependencies:
   # The path package provides common operations for manipulating paths: joining, splitting, normalizing, etc.
   path: ^1.8.0
 
+  # A wrapper around InheritedWidget to make them easier to use and more reusable.
+  provider: ^6.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

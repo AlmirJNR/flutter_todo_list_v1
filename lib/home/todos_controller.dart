@@ -6,33 +6,41 @@ import 'package:flutter_todo_list_v1/widgets/update_todo_modal.dart';
 
 import '../widgets/remove_todo_snackbar.dart';
 
-class ToDosController {
-  final ToDosDatabaseService _toDosDatabaseService = ToDosDatabaseService();
+enum ToDosState { loading, initialized }
+
+class ToDosController extends ChangeNotifier {
+  final ToDosDatabaseService _toDosDatabaseService;
 
   final GlobalKey<FormState> addToDosFormKey = GlobalKey<FormState>();
+
   final TextEditingController addToDosInputController = TextEditingController();
-  final FocusNode addToDosInputFocus = FocusNode();
   final TextEditingController updateToDoInputController = TextEditingController();
+  final FocusNode addToDosInputFocus = FocusNode();
   final FocusNode updateToDosInputFocusNode = FocusNode();
+
+  ValueNotifier<ToDosState> state = ValueNotifier(ToDosState.loading);
+
   late List<ToDo> _toDos;
-  final ValueNotifier<bool> todosNotifierFlag = ValueNotifier<bool>(false);
 
-  int? removedToDoIndex;
-  ToDo? removedToDo;
+  int? _removedToDoIndex;
+  ToDo? _removedToDo;
 
-  List<ToDo> removedToDoList = [];
+  List<ToDo> _removedToDoList = [];
+
+  ToDosController(this._toDosDatabaseService);
 
   List<ToDo> get toDos => _toDos;
-
-  void notifyToDosNotifierFlagListeners() => todosNotifierFlag.value = !todosNotifierFlag.value;
 
   Future<void> initToDos() async {
     await _toDosDatabaseService.initDatabase();
     _toDos = await _toDosDatabaseService.readToDos();
+
+    state.value = ToDosState.initialized;
   }
 
   Future<void> reloadToDos() async {
     _toDos = await _toDosDatabaseService.readToDos();
+    notifyListeners();
   }
 
   void validateToDoForm() {
@@ -55,7 +63,6 @@ class ToDosController {
     await _toDosDatabaseService.createToDo(newToDo);
     addToDosInputController.clear();
     await reloadToDos();
-    notifyToDosNotifierFlagListeners();
   }
 
   void showUpdateToDoDialog(BuildContext context, ToDo todo) {
@@ -84,12 +91,12 @@ class ToDosController {
 
     await _toDosDatabaseService.updateToDo(todo);
 
-    notifyToDosNotifierFlagListeners();
+    notifyListeners();
   }
 
   void removeToDo(BuildContext context, {required int index, required ToDo todo}) async {
-    removedToDoIndex = index;
-    removedToDo = todo;
+    _removedToDoIndex = index;
+    _removedToDo = todo;
 
     toDos.remove(todo);
     await _toDosDatabaseService.deleteToDo(todo);
@@ -97,17 +104,17 @@ class ToDosController {
     ScaffoldMessenger.of(context).showSnackBar(
       RemoveToDoSnackbarWidget(
         context,
-        text: 'You have removed ${removedToDo?.title}',
+        text: 'You have removed ${_removedToDo?.title}',
         onPressed: () => undoRemoveToDo(),
       ).snackBar,
     );
-    notifyToDosNotifierFlagListeners();
+    notifyListeners();
   }
 
   void undoRemoveToDo() async {
-    toDos.insert(removedToDoIndex ?? 0, removedToDo ?? ToDo(title: ''));
-    await _toDosDatabaseService.createToDo(removedToDo ?? ToDo(title: ''));
-    notifyToDosNotifierFlagListeners();
+    toDos.insert(_removedToDoIndex ?? 0, _removedToDo ?? ToDo(title: ''));
+    await _toDosDatabaseService.createToDo(_removedToDo ?? ToDo(title: ''));
+    notifyListeners();
   }
 
   void showRemoveAllToDosDialog(BuildContext context) {
@@ -128,7 +135,7 @@ class ToDosController {
   }
 
   void removeAllToDos(BuildContext context) async {
-    removedToDoList = toDos.toList();
+    _removedToDoList = toDos.toList();
 
     toDos.clear();
     await _toDosDatabaseService.deleteAllToDos();
@@ -136,20 +143,20 @@ class ToDosController {
     ScaffoldMessenger.of(context).showSnackBar(
       RemoveToDoSnackbarWidget(
         context,
-        text: 'You have removed ${removedToDoList.length} To-dos',
+        text: 'You have removed ${_removedToDoList.length} To-dos',
         onPressed: () => undoRemoveAllToDos(),
       ).snackBar,
     );
-    notifyToDosNotifierFlagListeners();
+    notifyListeners();
   }
 
   void undoRemoveAllToDos() async {
-    toDos.addAll(removedToDoList);
+    toDos.addAll(_removedToDoList);
 
-    for (var todo in removedToDoList) {
+    for (var todo in _removedToDoList) {
       await _toDosDatabaseService.createToDo(todo);
     }
 
-    notifyToDosNotifierFlagListeners();
+    notifyListeners();
   }
 }

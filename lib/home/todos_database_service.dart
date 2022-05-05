@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_todo_list_v1/home/todo_model.dart';
@@ -6,13 +9,17 @@ class ToDosDatabaseService {
   late final Database _database;
 
   Future<void> initDatabase() async {
-    _database = await openDatabase(
+    try {
+      _database = await openDatabase(
         join(await getDatabasesPath(), 'todos_database.db'),
         onCreate: (db, version) {
           return db.execute('CREATE TABLE todos(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, date TEXT)');
         },
         version: 1,
       );
+    } catch (error) {
+      log('ToDosDatabaseService Error', error: error);
+    }
   }
 
   Future<void> createToDo(ToDo todo) async {

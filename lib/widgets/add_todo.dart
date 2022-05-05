@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_todo_list_v1/home/todos_controller.dart';
+import 'package:provider/provider.dart';
 
 class AddToDoWidget extends StatelessWidget {
-  const AddToDoWidget({
-    Key? key,
-    required this.controller,
-  }) : super(key: key);
-
-  final ToDosController controller;
+  const AddToDoWidget({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final ToDosController controller = context.watch<ToDosController>();
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
