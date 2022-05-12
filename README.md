@@ -11,6 +11,7 @@
 
 ## Platforms:
 - Android
+  - Located at [Google Play Store](https://play.google.com/store/apps/details?id=dev.almirafjr.todo_list)
 
 ## Privacy Policy
 This project does not collect any kind of user data and does not have any kind of in-app purchase, this software is as it is and will be forever free to use.
