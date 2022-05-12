@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_todo_list_v1/home/todo_model.dart';
 import 'package:flutter_todo_list_v1/home/todos_database_service.dart';
-import 'package:flutter_todo_list_v1/widgets/remove_todo_modal.dart';
-import 'package:flutter_todo_list_v1/widgets/update_todo_modal.dart';
-
-import '../widgets/remove_todo_snackbar.dart';
 
 enum ToDosState { loading, initialized }
 
@@ -30,6 +26,8 @@ class ToDosController extends ChangeNotifier {
   ToDosController(this._toDosDatabaseService);
 
   List<ToDo> get toDos => _toDos;
+  ToDo? get removedToDo => _removedToDo;
+  List<ToDo> get removedToDoList => _removedToDoList;
 
   Future<void> initToDos() async {
     await _toDosDatabaseService.initDatabase();
@@ -65,25 +63,12 @@ class ToDosController extends ChangeNotifier {
     await reloadToDos();
   }
 
-  void showUpdateToDoDialog(BuildContext context, ToDo todo) {
+  void showUpdateToDoDialog({required ToDo todo, required void Function() showDialog}) {
     addToDosInputFocus.unfocus();
     updateToDoInputController.text = todo.title;
     updateToDosInputFocusNode.requestFocus();
 
-    showDialog(
-      context: context,
-      builder: (context) => UpdateToDoModalWidget(
-        context,
-        todo: todo,
-        controller: updateToDoInputController,
-        focusNode: updateToDosInputFocusNode,
-        onAccepted: () {
-          updateToDo(todo);
-          Navigator.of(context).pop();
-        },
-      ).alertDialog,
-      barrierDismissible: false,
-    );
+    showDialog();
   }
 
   void updateToDo(ToDo todo) async {
@@ -94,20 +79,13 @@ class ToDosController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeToDo(BuildContext context, {required int index, required ToDo todo}) async {
+  void removeToDo({required int index, required ToDo todo, required void Function() showSnackbar}) async {
     _removedToDoIndex = index;
     _removedToDo = todo;
 
     toDos.remove(todo);
     await _toDosDatabaseService.deleteToDo(todo);
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      RemoveToDoSnackbarWidget(
-        context,
-        text: 'You have removed ${_removedToDo?.title}',
-        onPressed: () => undoRemoveToDo(),
-      ).snackBar,
-    );
+    showSnackbar();
     notifyListeners();
   }
 
@@ -117,36 +95,17 @@ class ToDosController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void showRemoveAllToDosDialog(BuildContext context) {
+  void showRemoveAllToDosDialog(void Function() showDialog) {
     addToDosInputFocus.unfocus();
-    showDialog<AlertDialog>(
-      context: context,
-      builder: (context) => RemoveToDoDialogWidget(
-        context,
-        title: 'Remove all to-dos?',
-        content: 'Are you sure that you want to remove all to-dos?',
-        onAccepted: () {
-          Navigator.of(context).pop();
-          removeAllToDos(context);
-        },
-      ).alertDialog,
-      barrierDismissible: false,
-    );
+    showDialog();
   }
 
-  void removeAllToDos(BuildContext context) async {
+  void removeAllToDos(void Function() showSnackbar) async {
     _removedToDoList = toDos.toList();
 
     toDos.clear();
     await _toDosDatabaseService.deleteAllToDos();
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      RemoveToDoSnackbarWidget(
-        context,
-        text: 'You have removed ${_removedToDoList.length} To-dos',
-        onPressed: () => undoRemoveAllToDos(),
-      ).snackBar,
-    );
+    showSnackbar();
     notifyListeners();
   }
 
